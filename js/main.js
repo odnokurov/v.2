@@ -1,61 +1,68 @@
 Vue.component('note-card', {
-        props: ['card'],
-        template: `
+    props: ['card', 'disabled'],
+    template: `
         <div class="card" :style="{ backgroundColor: card.color }">
-            <input type="text" v-model="card.title" placeholder="Заголовок карточки" />
+            <input type="text" v-model="localCard.title" placeholder="Заголовок карточки" :disabled="disabled" />
             <label for="colorInput">Цвет:</label>
-            <input type="color" v-model="card.color" />
+            <input type="color" v-model="localCard.color" :disabled="disabled" />
             <ul>
-                <li v-for="(item, itemIndex) in card.items" :key="itemIndex">
-                    <input type="checkbox" v-model="item.completed" @change="updateCard">
-                    <input type="text" v-model="item.text" placeholder="Пункт списка" />
+                <li v-for="(item, itemIndex) in localCard.items" :key="itemIndex">
+                    <input type="checkbox" v-model="item.completed" :disabled="disabled" @change="handleCheckboxChange">
+                    <input type="text" v-model="item.text" placeholder="Пункт списка" :disabled="disabled" />
                 </li>
             </ul>
-            <input type="text" v-model="newItemText" placeholder="Новый пункт списка" />
-            <button @click="addItem" :disabled="itemCount >= 5">Добавить пункт</button>
-            <button @click="removeCard(card.id)">Удалить</button>
+            <input type="text" v-model="newItemText" placeholder="Новый пункт списка" :disabled="disabled" />
+            <button @click="addItem" :disabled="disabled || itemCount >= 5">Добавить пункт</button>
+            <button @click="removeCard" :disabled="disabled">Удалить карточку</button>
             <p v-if="card.completedDate">Завершено: {{ card.completedDate }}</p>
         </div>
     `,
-        data() {
-            return {
-                newItemText: '',
-                localCard: {...this.card, items: [...this.card.items.map(i => ({...i}))]}
-            }
-        },
-        watch: {
-            card: {
-                handler(newVal) {
-                    this.localCard = {...newVal, items: [...newVal.items.map(i => ({...i}))]};
-                },
-                deep: true,
-                immediate: true
-            }
-        },
-        computed: {
-            itemCount() {
-                return this.localCard.items.length;
-            }
-        },
-        methods: {
-            addItem() {
-                if (this.newItemText.trim() && this.itemCount < 5) {
-                    this.localCard.items.push({text: this.newItemText, completed: false});
-                    this.newItemText = '';
-                    this.emitUpdate();
-                }
+    data() {
+        return {
+            newItemText: '',
+            localCard: null
+        };
+    },
+    watch: {
+        card: {
+            handler(newVal) {
+                this.localCard = {
+                    ...newVal,
+                    items: newVal.items.map(i => ({ ...i }))
+                };
             },
-            emitUpdate() {
-                this.$emit('update-card', this.localCard);
-            },
-            removeCard() {
-                this.$emit('remove-card', this.card.id);
-            }
+            deep: true,
+            immediate: true
         }
-    })
+    },
+    computed: {
+        itemCount() {
+            return this.localCard.items.length;
+        }
+    },
+    methods: {
+        handleCheckboxChange() {
+            if (this.disabled) return;
+            this.emitUpdate();
+        },
+        addItem() {
+            if (this.disabled || this.newItemText.trim() === '' || this.itemCount >= 5) return;
+            this.localCard.items.push({ text: this.newItemText, completed: false });
+            this.newItemText = '';
+            this.emitUpdate();
+        },
+        emitUpdate() {
+            this.$emit('update-card', this.localCard);
+        },
+        removeCard() {
+            if (this.disabled) return;
+            this.$emit('remove-card', this.card.id);
+        }
+    }
+});
 
 Vue.component('note-column', {
-    props: ['column'],
+    props: ['column', 'disabled'],
     template: `
         <div class="column">
             <h2>{{ column.title }}</h2>
@@ -63,20 +70,22 @@ Vue.component('note-column', {
                 v-for="(card, cardIndex) in column.cards"
                 :key="card.id"
                 :card="card"
+                :disabled="disabled"
                 @remove-card="$emit('remove-card', $event)"
                 @update-card="$emit('update-card', $event)"
             ></note-card>
-            <button v-if="canAddCard(column)" @click="$emit('add-card', column)">Добавить карточку</button>
+            <button v-if="canAddCard" @click="$emit('add-card', column)" :disabled="disabled">Добавить карточку</button>
         </div>
     `,
-    methods: {
-        canAddCard(column) {
-            if (column.title === 'Столбец 1' && column.cards.length >= 3) return false;
-            if (column.title === 'Столбец 2' && column.cards.length >= 5) return false;
+    computed: {
+        canAddCard() {
+            if (this.disabled) return false;
+            if (this.column.title === 'Столбец 1' && this.column.cards.length >= 3) return false;
+            if (this.column.title === 'Столбец 2' && this.column.cards.length >= 5) return false;
             return true;
         }
     }
-})
+});
 
 Vue.component('note-app', {
     data() {
@@ -89,19 +98,32 @@ Vue.component('note-app', {
             nextCardId: 1
         };
     },
+    computed: {
+        isColumn1Blocked() {
+            if (this.columns[1].cards.length < 5) return false;
+            return this.columns[0].cards.some(card => {
+                const completed = card.items.filter(i => i.completed).length;
+                return completed / card.items.length > 0.5;
+            });
+        }
+    },
     created() {
         this.loadCards();
     },
     methods: {
         loadCards() {
-            const savedData = JSON.parse(localStorage.getItem('cards'));
-            if (savedData) {
-                this.columns = savedData.columns;
-                this.nextCardId = savedData.nextCardId;
+            const saved = localStorage.getItem('cards');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                this.columns = parsed.columns;
+                this.nextCardId = parsed.nextCardId || 1;
             }
         },
         saveCards() {
-            localStorage.setItem('cards', JSON.stringify({ columns: this.columns, nextCardId: this.nextCardId }));
+            localStorage.setItem('cards', JSON.stringify({
+                columns: this.columns,
+                nextCardId: this.nextCardId
+            }));
         },
         addCard(column) {
             const newCard = {
@@ -119,10 +141,10 @@ Vue.component('note-app', {
             this.saveCards();
         },
         removeCard(cardId) {
-            for (let column of this.columns) {
-                const index = column.cards.findIndex(card => card.id === cardId);
-                if (index !== -1) {
-                    column.cards.splice(index, 1);
+            for (let col of this.columns) {
+                const idx = col.cards.findIndex(c => c.id === cardId);
+                if (idx !== -1) {
+                    col.cards.splice(idx, 1);
                     this.saveCards();
                     break;
                 }
@@ -139,22 +161,20 @@ Vue.component('note-app', {
                 }
             }
         },
-
         checkAndMoveCard(card) {
             const completed = card.items.filter(i => i.completed).length;
             const total = card.items.length;
             if (total === 0) return;
-
             const progress = completed / total;
 
             if (progress > 0.5 && this.columns[0].cards.some(c => c.id === card.id)) {
-                this.moveCard(card.id, 1);
-                this.saveCards();
+                if (this.columns[1].cards.length < 5) {
+                    this.moveCard(card.id, 1);
+                }
             }
             else if (progress === 1 && this.columns[1].cards.some(c => c.id === card.id)) {
                 this.moveCard(card.id, 2);
-                card.completedDate = new Date().toLocaleString();
-                this.saveCards();
+                card.completedDate = new Date().toLocaleString('ru-RU');
             }
         },
         moveCard(cardId, targetIndex) {
@@ -175,6 +195,7 @@ Vue.component('note-app', {
                     v-for="(column, index) in columns"
                     :key="index"
                     :column="column"
+                    :disabled="index === 0 && isColumn1Blocked"
                     @remove-card="removeCard"
                     @update-card="updateCard"
                     @add-card="addCard"
@@ -182,7 +203,7 @@ Vue.component('note-app', {
             </div>
         </div>
     `
-}),
+});
 
 new Vue({
     el: '#app'
