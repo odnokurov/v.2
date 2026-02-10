@@ -5,39 +5,12 @@
     <meta name="viewport"
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <script defer src="js/vue.min.js"></script>
+    <script defer src="js/vue.js"></script>
     <script defer src="js/main.js"></script>
     <link rel="stylesheet" href="css/main.css">
     <title>Product App</title>
 </head>
 <body>
-<div id="app">
-    <div class="columns">
-        <div class="column" v-for="(column, index) in columns" :key="index">
-            <h2>{{ column.title }}</h2>
-            <div class="card" v-for="(card, cardIndex) in column.cards" :key="card.id" :style="{ backgroundColor: card.color }">
-                <input type="text" v-model="card.title" placeholder="Заголовок карточки" />
-                <label>Выберите цвет:</label>
-                <input type="color" v-model="card.color">
-                <ul>
-                    <li v-for="(item, itemIndex) in card.items" :key="itemIndex">
-                        <input type="checkbox" v-model="item.completed" @change="updateCard(card)">
-                        <input type="text" v-model="item.text" placeholder="Пункт списка" />
-                    </li>
-                </ul>
-                <button @click="removeCard(card.id)">Удалить</button>
-                <p v-if="card.completedDate">Завершено: {{ card.completedDate }}</p>
-                <div>
-                    <label>Добавить метки:</label>
-                    <input type="text" v-model="card.tag" placeholder="Введите метку" @keyup.enter="addTag(card)" />
-                    <ul>
-                        <li v-for="(tag, tagIndex) in card.tags" :key="tagIndex">{{ tag }}</li>
-                    </ul>
-                </div>
-            </div>
-            <button v-if="canAddCard(column)" @click="addCard(index)">Добавить карточку</button>
-        </div>
-    </div>
-</div>
+<note-app></note-app>
 </body>
 </html>
