@@ -11,21 +11,39 @@ Vue.component('note-card', {
                     <input type="text" v-model="item.text" placeholder="Пункт списка" />
                 </li>
             </ul>
+            <input type="text" v-model="newItemText" placeholder="Новый пункт списка" />
+            <button @click="addItem" :disabled="itemCount >= 5">Добавить пункт</button>
             <button @click="removeCard(card.id)">Удалить</button>
             <p v-if="card.completedDate">Завершено: {{ card.completedDate }}</p>
         </div>
     `,
+    data() {
+        return {
+            newItemText: '',
+        };
+    },
+    computed: {
+        itemCount() {
+            return this.card.items.length;
+        }
+    },
     methods: {
         removeCard(cardId) {
             this.$emit('remove-card', cardId);
         },
         updateCard() {
             this.$emit('update-card', this.card);
+        },
+        addItem() {
+            if (this.newItemText.trim() !== '' && this.itemCount < 5) {
+                this.card.items.push({ text: this.newItemText, completed: false });
+                this.newItemText = '';
+                this.updateCard();
+            }
         }
     }
 });
 
-// Компонент колонки заметок
 Vue.component('note-column', {
     props: ['column'],
     template: `
@@ -50,7 +68,6 @@ Vue.component('note-column', {
     }
 });
 
-// Главный компонент приложения заметок
 Vue.component('note-app', {
     data() {
         return {
@@ -91,7 +108,6 @@ Vue.component('note-app', {
             column.cards.push(newCard);
             this.saveCards();
         },
-
         removeCard(cardId) {
             for (let column of this.columns) {
                 const index = column.cards.findIndex(card => card.id === cardId);
