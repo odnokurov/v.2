@@ -1,0 +1,129 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f5f7fa;
+    color: #333;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.columns {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.column {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    padding: 20px;
+    min-width: 320px;
+    flex: 1;
+    max-width: 420px;
+}
+
+.column h2 {
+    font-size: 1.4rem;
+    margin-bottom: 16px;
+    color: #2c3e50;
+    text-align: center;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #eee;
+}
+
+.card {
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+    border: 1px solid #eee;
+}
+
+input[type="text"] {
+    width: 100%;
+    padding: 10px 12px;
+    margin: 8px 0;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 1rem;
+}
+
+input[type="color"] {
+    width: 60px;
+    height: 40px;
+    padding: 2px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+ul {
+    list-style: none;
+    margin: 12px 0;
+}
+
+li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+li:last-child {
+    border-bottom: none;
+}
+
+input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+button {
+    padding: 10px 16px;
+    margin: 8px 4px 4px 0;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+button:not([disabled]) {
+    background: #3498db;
+    color: white;
+}
+
+button[disabled] {
+    background: #ccc;
+    color: #777;
+    cursor: not-allowed;
+}
+
+.column button {
+    width: 100%;
+    padding: 12px;
+    font-size: 1rem;
+    margin-top: 12px;
+    background: #2ecc71;
+}
+
+p {
+    margin-top: 12px;
+    font-size: 0.9rem;
+    color: #7f8c8d;
+    text-align: right;
+    font-style: italic;
+}
