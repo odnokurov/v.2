@@ -74,7 +74,7 @@ Vue.component('note-column', {
                 @remove-card="$emit('remove-card', $event)"
                 @update-card="$emit('update-card', $event)"
             ></note-card>
-            <button v-if="canAddCard" @click="$emit('add-card', column)" :disabled="disabled">Добавить карточку</button>
+            <button v-if="canAddCard && column.title === 'Столбец 1'" @click="$emit('add-card', column)" :disabled="disabled">Добавить карточку</button>
         </div>
     `,
     computed: {
