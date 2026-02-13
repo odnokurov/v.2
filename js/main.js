@@ -3,7 +3,11 @@ Vue.component('note-card', {
     template: `
         <div class="card" :style="{ backgroundColor: card.color }">
             <input type="text" v-model="localCard.title" placeholder="Заголовок карточки" :disabled="disabled" />
-            <label for="colorInput">Цвет:</label>
+            
+            <!-- Отображение прогресса -->
+            <div class="progress-badge">Прогресс: {{ progress }}%</div>
+
+            <label>Цвет:</label>
             <input type="color" v-model="localCard.color" :disabled="disabled" />
             <ul>
                 <li v-for="(item, itemIndex) in localCard.items" :key="itemIndex">
@@ -14,7 +18,7 @@ Vue.component('note-card', {
             <input type="text" v-model="newItemText" placeholder="Новый пункт списка" :disabled="disabled" />
             <button @click="addItem" :disabled="disabled || itemCount >= 5">Добавить пункт</button>
             <button @click="removeCard" :disabled="disabled">Удалить карточку</button>
-            <p v-if="card.completedDate">Завершено: {{ card.completedDate }}</p>
+            <p v-if="card.completedDate">✅ Завершено: {{ card.completedDate }}</p>
         </div>
     `,
     data() {
@@ -38,6 +42,11 @@ Vue.component('note-card', {
     computed: {
         itemCount() {
             return this.localCard.items.length;
+        },
+        progress() {
+            if (this.itemCount === 0) return 0;
+            const completed = this.localCard.items.filter(i => i.completed).length;
+            return Math.round((completed / this.itemCount) * 100);
         }
     },
     methods: {
@@ -81,7 +90,6 @@ Vue.component('note-column', {
         canAddCard() {
             if (this.disabled) return false;
             if (this.column.title === 'Столбец 1' && this.column.cards.length >= 3) return false;
-            if (this.column.title === 'Столбец 2' && this.column.cards.length >= 5) return false;
             return true;
         }
     }
@@ -103,7 +111,7 @@ Vue.component('note-app', {
             if (this.columns[1].cards.length < 5) return false;
             return this.columns[0].cards.some(card => {
                 const completed = card.items.filter(i => i.completed).length;
-                return completed / card.items.length > 0.5;
+                return (completed / card.items.length) > 0.5;
             });
         }
     },
@@ -128,8 +136,8 @@ Vue.component('note-app', {
         addCard(column) {
             const newCard = {
                 id: this.nextCardId++,
-                title: `Карточка ${this.nextCardId}`,
-                color: '#f9f9f9',
+                title: `Новая задача`,
+                color: '#ffffff',
                 items: [
                     { text: 'Пункт 1', completed: false },
                     { text: 'Пункт 2', completed: false },
@@ -141,20 +149,17 @@ Vue.component('note-app', {
             this.saveCards();
         },
         removeCard(cardId) {
-            for (let col of this.columns) {
+            this.columns.forEach(col => {
                 const idx = col.cards.findIndex(c => c.id === cardId);
-                if (idx !== -1) {
-                    col.cards.splice(idx, 1);
-                    this.saveCards();
-                    break;
-                }
-            }
+                if (idx !== -1) col.cards.splice(idx, 1);
+            });
+            this.saveCards();
         },
         updateCard(updatedCard) {
             for (let col of this.columns) {
                 const idx = col.cards.findIndex(c => c.id === updatedCard.id);
                 if (idx !== -1) {
-                    col.cards[idx] = { ...updatedCard };
+                    Vue.set(col.cards, idx, updatedCard);
                     this.checkAndMoveCard(col.cards[idx]);
                     this.saveCards();
                     break;
@@ -167,24 +172,21 @@ Vue.component('note-app', {
             if (total === 0) return;
             const progress = completed / total;
 
-            if (progress > 0.5 && this.columns[0].cards.some(c => c.id === card.id)) {
+            if (progress >= 0.5 && this.columns[0].cards.some(c => c.id === card.id)) {
                 if (this.columns[1].cards.length < 5) {
-                    this.moveCard(card.id, 1);
+                    this.moveCard(card.id, 0, 1);
                 }
             }
             else if (progress === 1 && this.columns[1].cards.some(c => c.id === card.id)) {
-                this.moveCard(card.id, 2);
                 card.completedDate = new Date().toLocaleString('ru-RU');
+                this.moveCard(card.id, 1, 2);
             }
         },
-        moveCard(cardId, targetIndex) {
-            for (let col of this.columns) {
-                const idx = col.cards.findIndex(c => c.id === cardId);
-                if (idx !== -1) {
-                    const [card] = col.cards.splice(idx, 1);
-                    this.columns[targetIndex].cards.push(card);
-                    break;
-                }
+        moveCard(cardId, fromIndex, toIndex) {
+            const cardIdx = this.columns[fromIndex].cards.findIndex(c => c.id === cardId);
+            if (cardIdx !== -1) {
+                const [card] = this.columns[fromIndex].cards.splice(cardIdx, 1);
+                this.columns[toIndex].cards.push(card);
             }
         }
     },
@@ -195,7 +197,7 @@ Vue.component('note-app', {
                     v-for="(column, index) in columns"
                     :key="index"
                     :column="column"
-                    :disabled="index === 0 && isColumn1Blocked"
+                    :disabled="(index === 0 && isColumn1Blocked) || index === 2"
                     @remove-card="removeCard"
                     @update-card="updateCard"
                     @add-card="addCard"
