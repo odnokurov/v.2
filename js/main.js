@@ -4,7 +4,6 @@ Vue.component('note-card', {
         <div class="card" :style="{ backgroundColor: card.color }">
             <input type="text" v-model="localCard.title" placeholder="Заголовок карточки" :disabled="disabled" />
             
-            <!-- Отображение прогресса -->
             <div class="progress-badge">Прогресс: {{ progress }}%</div>
 
             <label>Цвет:</label>
@@ -136,7 +135,7 @@ Vue.component('note-app', {
         addCard(column) {
             const newCard = {
                 id: this.nextCardId++,
-                title: `Новая задача`,
+                title: `Карточка ${this.nextCardId}`,
                 color: '#ffffff',
                 items: [
                     { text: 'Пункт 1', completed: false },
