@@ -18,7 +18,7 @@ Vue.component('note-card', {
             <input type="text" v-model="newItemText" placeholder="Новый пункт списка" :disabled="disabled" />
             <button @click="addItem" :disabled="disabled || itemCount >= 5">Добавить пункт</button>
             <button @click="removeCard" :disabled="disabled">Удалить карточку</button>
-            <p v-if="card.completedDate">✅ Завершено: {{ card.completedDate }}</p>
+            <p v-if="card.completedDate">Завершено: {{ card.completedDate }}</p>
         </div>
     `,
     data() {
